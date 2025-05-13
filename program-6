@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <ctype.h>
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1)
+            return x;
+    }
+    return -1; 
+}
+
+
+char decryptChar(char c, int a_inv, int b) {
+    if (!isalpha(c)) return c;
+
+    int base = isupper(c) ? 'A' : 'a';
+    int cVal = c - base;
+    int pVal = (a_inv * (cVal - b + 26)) % 26;
+    return pVal + base;
+}
+
+int findKey(int p1, int c1, int p2, int c2, int *a, int *b) {
+    int m = 26;
+    int dp = (p1 - p2 + m) % m;
+    int dc = (c1 - c2 + m) % m;
+
+    int inv = modInverse(dp, m);
+    if (inv == -1) return 0; // Cannot solve, not invertible
+
+    *a = (dc * inv) % m;
+    *b = (c1 - (*a * p1) + m * m) % m;
+    return 1;
+}
+
+int main() {
+    char ciphertext[100];
+    int a, b;
+
+    int P1 = 4, C1 = 1;
+    int P2 = 19, C2 = 20;
+
+    if (!findKey(P1, C1, P2, C2, &a, &b)) {
+        printf("Could not find a valid key.\n");
+        return 1;
+    }
+
+    int a_inv = modInverse(a, 26);
+    if (a_inv == -1) {
+        printf("Modular inverse of 'a' not found. Cannot decrypt.\n");
+        return 1;
+    }
+
+    printf("Guessed Key: a = %d, b = %d\n", a, b);
+    printf("Enter ciphertext: ");
+    scanf(" %[^\n]", ciphertext); 
+
+    printf("Decrypted plaintext: ");
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        printf("%c", decryptChar(ciphertext[i], a_inv, b));
+    }
+    printf("\n");
+
+    return 0;
+}
