@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <string.h>
+
+// Ciphertext to be decrypted
+char ciphertext[] = 
+"53‡‡†305))6*;4826)4‡.)4‡);806*;48†8¶60))85;;]8*;:‡*8†83"
+"(88)5*†;46(;88*96*?;8)*‡(;485);5*†2:*‡(;4956*2(5*—4)8¶8*"
+";4069285);)6†8)4‡‡;1(‡9;48081;8:8‡1;48†85;4)485†528806*81"
+"(‡9;48;(88;4(‡?34;48)4‡;161;:188;‡?;";
+
+// Function to decrypt using a hardcoded substitution map
+char substitute(char ch) {
+    // This map is created manually based on frequency and pattern analysis
+    switch(ch) {
+        case '8': return 'e';
+        case '4': return 't';
+        case '‡': return 'h';
+        case '3': return 'o';
+        case '0': return 'n';
+        case '5': return 's';
+        case '6': return 'a';
+        case '†': return 'r';
+        case ')': return ' ';
+        case '*': return 'd';
+        case ';': return 'i';
+        case '.': return 'l';
+        case '2': return 'u';
+        case '(': return 'm';
+        case '9': return 'g';
+        case ':': return 'y';
+        case '¶': return 'c';
+        case ']': return 'f';
+        case '?': return 'b';
+        case '—': return 'p';
+        case '1': return 'v';
+        default: return ch; // keep unchanged if not mapped
+    }
+}
+
+int main() {
+    int i;
+    printf("Decrypted Message:\n");
+    for(i = 0; i < strlen(ciphertext); i++) {
+        printf("%c", substitute(ciphertext[i]));
+    }
+    printf("\n");
+    return 0;
+}
