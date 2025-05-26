@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_TEXT_SIZE 1000
+#define ALPHABET_SIZE 26
+#define TOP_RESULTS 10
+
+void computeFrequency(char *ciphertext, int freq[]) {
+    memset(freq, 0, sizeof(int) * ALPHABET_SIZE);
+    int length = strlen(ciphertext);
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            freq[ciphertext[i] - 'A']++;
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            freq[ciphertext[i] - 'a']++;
+    }
+}
+
+void decryptShiftCipher(char *ciphertext, int shift, char *plaintext) {
+    int length = strlen(ciphertext);
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            plaintext[i] = ((ciphertext[i] - 'A' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'A';
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            plaintext[i] = ((ciphertext[i] - 'a' - shift + ALPHABET_SIZE) % ALPHABET_SIZE) + 'a';
+        else
+            plaintext[i] = ciphertext[i];
+    }
+    plaintext[length] = '\0';
+}
+
+int main() {
+    char ciphertext[MAX_TEXT_SIZE], plaintexts[TOP_RESULTS][MAX_TEXT_SIZE];
+    int freq[ALPHABET_SIZE], topShifts[TOP_RESULTS];
+
+    printf("Enter ciphertext: ");
+    fgets(ciphertext, MAX_TEXT_SIZE, stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0';
+
+    computeFrequency(ciphertext, freq);
+
+    int mostFrequent = 0;
+    for (int i = 1; i < ALPHABET_SIZE; i++)
+        if (freq[i] > freq[mostFrequent])
+            mostFrequent = i;
+
+    for (int i = 0; i < TOP_RESULTS; i++) {
+        topShifts[i] = (mostFrequent - ('E' - 'A') + ALPHABET_SIZE) % ALPHABET_SIZE;
+        decryptShiftCipher(ciphertext, topShifts[i], plaintexts[i]);
+    }
+
+    printf("\nTop %d possible plaintexts:\n", TOP_RESULTS);
+    for (int i = 0; i < TOP_RESULTS; i++) {
+        printf("%d: Shift %d -> %s\n", i + 1, topShifts[i], plaintexts[i]);
+    }
+
+    return 0;
+}
