@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 5
+
+char matrix[SIZE][SIZE] = {
+    {'M', 'F', 'H', 'I', 'K'},
+    {'U', 'N', 'O', 'P', 'Q'},
+    {'Z', 'V', 'W', 'X', 'Y'},
+    {'E', 'L', 'A', 'R', 'G'},
+    {'D', 'S', 'T', 'B', 'C'}
+};
+
+void findPosition(char ch, int *row, int *col) {
+    if (ch == 'J') ch = 'I';
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            if (matrix[i][j] == ch) {
+                *row = i;
+                *col = j;
+                return;
+            }
+}
+
+void prepareMessage(char *input, char *output) {
+    int len = 0;
+    for (int i = 0; input[i]; i++)
+        if (isalpha(input[i]))
+            output[len++] = toupper(input[i] == 'J' ? 'I' : input[i]);
+    output[len] = '\0';
+
+    int i = 0, j = 0;
+    char temp[512];
+    while (i < len) {
+        temp[j++] = output[i];
+        if (i + 1 == len || output[i] == output[i + 1]) {
+            temp[j++] = 'X';
+            i++;
+        } else {
+            temp[j++] = output[i + 1];
+            i += 2;
+        }
+    }
+    temp[j] = '\0';
+    strcpy(output, temp);
+}
+
+void encryptPair(char a, char b, char *out1, char *out2) {
+    int row1, col1, row2, col2;
+    findPosition(a, &row1, &col1);
+    findPosition(b, &row2, &col2);
+
+    if (row1 == row2) {
+        *out1 = matrix[row1][(col1 + 1) % SIZE];
+        *out2 = matrix[row2][(col2 + 1) % SIZE];
+    } else if (col1 == col2) {
+        *out1 = matrix[(row1 + 1) % SIZE][col1];
+        *out2 = matrix[(row2 + 1) % SIZE][col2];
+    } else {
+        *out1 = matrix[row1][col2];
+        *out2 = matrix[row2][col1];
+    }
+}
+
+int main() {
+    char input[] = "Must see you over Cadogan West. Coming at once.";
+    char message[512], encrypted[512];
+    int i;
+
+    prepareMessage(input, message);
+
+    for (i = 0; i < strlen(message); i += 2)
+        encryptPair(message[i], message[i + 1], &encrypted[i], &encrypted[i + 1]);
+
+    encrypted[i] = '\0';
+
+    printf("Encrypted message: %s\n", encrypted);
+    return 0;
+}
