@@ -1,0 +1,90 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define SIZE 2
+#define MOD 26
+
+int key[SIZE][SIZE] = {
+    {9, 4},
+    {5, 7}
+};
+
+int inverseKey[SIZE][SIZE];
+
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++)
+        if ((a * x) % m == 1)
+            return x;
+    return -1;
+}
+
+void getInverseKey() {
+    int det = key[0][0]*key[1][1] - key[0][1]*key[1][0];
+    det = (det % MOD + MOD) % MOD;
+    int invDet = modInverse(det, MOD);
+
+    inverseKey[0][0] =  key[1][1] * invDet % MOD;
+    inverseKey[0][1] = -key[0][1] * invDet % MOD;
+    inverseKey[1][0] = -key[1][0] * invDet % MOD;
+    inverseKey[1][1] =  key[0][0] * invDet % MOD;
+
+    for (int i = 0; i < SIZE; i++)
+        for (int j = 0; j < SIZE; j++)
+            inverseKey[i][j] = (inverseKey[i][j] + MOD) % MOD;
+}
+
+void prepareText(char *input, char *output) {
+    int len = 0;
+    for (int i = 0; input[i]; i++)
+        if (isalpha(input[i]))
+            output[len++] = tolower(input[i]) - 'a';
+
+    if (len % 2 != 0)
+        output[len++] = 'x' - 'a';
+
+    output[len] = -1;
+}
+
+void encrypt(char *plain, char *cipher) {
+    int i = 0, j = 0;
+    while (plain[i] != -1) {
+        int a = plain[i];
+        int b = plain[i+1];
+
+        cipher[j++] = (key[0][0]*a + key[0][1]*b) % MOD + 'a';
+        cipher[j++] = (key[1][0]*a + key[1][1]*b) % MOD + 'a';
+        i += 2;
+    }
+    cipher[j] = '\0';
+}
+
+void decrypt(char *cipher, char *plain) {
+    int i = 0, j = 0;
+    while (cipher[i]) {
+        int a = cipher[i++] - 'a';
+        int b = cipher[i++] - 'a';
+
+        plain[j++] = (inverseKey[0][0]*a + inverseKey[0][1]*b) % MOD + 'a';
+        plain[j++] = (inverseKey[1][0]*a + inverseKey[1][1]*b) % MOD + 'a';
+    }
+    plain[j] = '\0';
+}
+
+int main() {
+    char input[] = "meet me at the usual place at ten rather than eight oclock";
+    char processed[512], ciphertext[512], decrypted[512];
+
+    int plain[512];
+    prepareText(input, plain);
+    getInverseKey();
+
+    encrypt(plain, ciphertext);
+    printf("Encrypted text: %s\n", ciphertext);
+
+    decrypt(ciphertext, decrypted);
+    printf("Decrypted text: %s\n", decrypted);
+
+    return 0;
+}
