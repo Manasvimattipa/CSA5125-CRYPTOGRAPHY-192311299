@@ -1,0 +1,25 @@
+#include <stdio.h>
+#include <math.h>
+
+unsigned long long factorial(int n) {
+    unsigned long long result = 1;
+    for (int i = 2; i <= n; i++)
+        result *= i;
+    return result;
+}
+
+int main() {
+    int total_letters = 25;
+    double log2_factorial = 0.0;
+
+    for (int i = 1; i <= total_letters; i++)
+        log2_factorial += log2(i);
+
+    printf("Approximate number of possible Playfair keys (in powers of 2): 2^%.2f\n", log2_factorial);
+
+    double approx_unique_keys = pow(2, log2_factorial) / 2.0;
+    double log2_unique = log2(approx_unique_keys);
+
+    printf("Approximate number of effectively unique Playfair keys (in powers of 2): 2^%.2f\n", log2_unique);
+    return 0;
+}
