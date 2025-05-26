@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+// Dummy hash function (just for illustration)
+unsigned int simple_hash(const char *message) {
+    unsigned int hash = 0;
+    for (int i = 0; message[i]; i++) {
+        hash = hash * 31 + message[i];
+    }
+    return hash;
+}
+
+// Simulated DSA sign: uses random k each time
+unsigned int dsa_sign(unsigned int message_hash, unsigned int q) {
+    unsigned int k = (rand() % (q - 1)) + 1;  // random k in [1, q-1]
+    // signature = (k + message_hash) mod q (simplified)
+    return (k + message_hash) % q;
+}
+
+// Simulated RSA sign: deterministic signature
+unsigned int rsa_sign(unsigned int message_hash, unsigned int d, unsigned int n) {
+    // signature = (message_hash ^ d) mod n (simplified exponentiation)
+    // We'll do a naive pow mod for demonstration
+    unsigned int result = 1;
+    unsigned int base = message_hash % n;
+    unsigned int exponent = d;
+
+    while (exponent > 0) {
+        if (exponent % 2 == 1)
+            result = (result * base) % n;
+        base = (base * base) % n;
+        exponent /= 2;
+    }
+
+    return result;
+}
+
+int main() {
+    srand(time(NULL));
+
+    // Message to sign
+    const char *message = "Hello, DSA vs RSA!";
+
+    // Hash the message
+    unsigned int msg_hash = simple_hash(message);
+
+    // Parameters (small values for simplicity)
+    unsigned int q = 97;        // DSA prime order (simplified)
+    unsigned int d = 17;        // RSA private exponent (small)
+    unsigned int n = 3233;      // RSA modulus (small)
+
+    printf("Message: %s\n", message);
+    printf("Message hash: %u\n\n", msg_hash);
+
+    // Generate DSA signatures twice for the same message
+    unsigned int dsa_sig1 = dsa_sign(msg_hash, q);
+    unsigned int dsa_sig2 = dsa_sign(msg_hash, q);
+
+    printf("DSA signature 1: %u\n", dsa_sig1);
+    printf("DSA signature 2: %u\n", dsa_sig2);
+    printf("DSA signatures differ? %s\n\n", (dsa_sig1 != dsa_sig2) ? "Yes" : "No");
+
+    // Generate RSA signatures twice for the same message
+    unsigned int rsa_sig1 = rsa_sign(msg_hash, d, n);
+    unsigned int rsa_sig2 = rsa_sign(msg_hash, d, n);
+
+    printf("RSA signature 1: %u\n", rsa_sig1);
+    printf("RSA signature 2: %u\n", rsa_sig2);
+    printf("RSA signatures differ? %s\n", (rsa_sig1 != rsa_sig2) ? "Yes" : "No");
+
+    return 0;
+}
