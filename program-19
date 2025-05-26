@@ -1,0 +1,29 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/des.h>
+
+void encryptCBC(unsigned char *plaintext, unsigned char *key, unsigned char *iv, unsigned char *ciphertext) {
+    DES_key_schedule keySchedule;
+    DES_set_key((DES_cblock*)key, &keySchedule);
+    
+    DES_cblock ivec;
+    memcpy(ivec, iv, sizeof(DES_cblock));
+
+    DES_ncbc_encrypt(plaintext, ciphertext, strlen((char*)plaintext), &keySchedule, &ivec, DES_ENCRYPT);
+}
+
+int main() {
+    unsigned char key[8] = "12345678";
+    unsigned char iv[8] = "initVect";
+    unsigned char plaintext[] = "CBC Encryption Test";
+    unsigned char ciphertext[sizeof(plaintext)];
+
+    encryptCBC(plaintext, key, iv, ciphertext);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("Ciphertext: ");
+    for (int i = 0; i < sizeof(plaintext); i++) printf("%02X ", ciphertext[i]);
+    printf("\n");
+
+    return 0;
+}
