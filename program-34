@@ -1,0 +1,136 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdint.h>
+
+#define BLOCK_SIZE 8 // 64 bits
+
+void xor_blocks(uint8_t *a, uint8_t *b, uint8_t *out) {
+    for(int i=0; i<BLOCK_SIZE; i++) {
+        out[i] = a[i] ^ b[i];
+    }
+}
+
+// Dummy block cipher encrypt (identity)
+void block_encrypt(uint8_t *plaintext, uint8_t *ciphertext) {
+    memcpy(ciphertext, plaintext, BLOCK_SIZE);
+}
+
+// Dummy block cipher decrypt (identity)
+void block_decrypt(uint8_t *ciphertext, uint8_t *plaintext) {
+    memcpy(plaintext, ciphertext, BLOCK_SIZE);
+}
+
+void pad(uint8_t *data, size_t data_len, uint8_t *padded, size_t *padded_len) {
+    size_t blocks = (data_len / BLOCK_SIZE) + 1;
+    *padded_len = blocks * BLOCK_SIZE;
+    memcpy(padded, data, data_len);
+    padded[data_len] = 0x80; // '1' bit followed by zeros (10000000)
+    for(size_t i = data_len+1; i < *padded_len; i++) {
+        padded[i] = 0x00;
+    }
+}
+
+void ecb_encrypt(uint8_t *plaintext, size_t length, uint8_t *ciphertext) {
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        block_encrypt(plaintext+i, ciphertext+i);
+    }
+}
+
+void ecb_decrypt(uint8_t *ciphertext, size_t length, uint8_t *plaintext) {
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        block_decrypt(ciphertext+i, plaintext+i);
+    }
+}
+
+void cbc_encrypt(uint8_t *plaintext, size_t length, uint8_t *iv, uint8_t *ciphertext) {
+    uint8_t prev_block[BLOCK_SIZE];
+    memcpy(prev_block, iv, BLOCK_SIZE);
+
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        uint8_t xored[BLOCK_SIZE];
+        xor_blocks(plaintext+i, prev_block, xored);
+        block_encrypt(xored, ciphertext+i);
+        memcpy(prev_block, ciphertext+i, BLOCK_SIZE);
+    }
+}
+
+void cbc_decrypt(uint8_t *ciphertext, size_t length, uint8_t *iv, uint8_t *plaintext) {
+    uint8_t prev_block[BLOCK_SIZE];
+    memcpy(prev_block, iv, BLOCK_SIZE);
+
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        uint8_t decrypted[BLOCK_SIZE];
+        block_decrypt(ciphertext+i, decrypted);
+        xor_blocks(decrypted, prev_block, plaintext+i);
+        memcpy(prev_block, ciphertext+i, BLOCK_SIZE);
+    }
+}
+
+void cfb_encrypt(uint8_t *plaintext, size_t length, uint8_t *iv, uint8_t *ciphertext) {
+    uint8_t prev_block[BLOCK_SIZE];
+    memcpy(prev_block, iv, BLOCK_SIZE);
+
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        uint8_t encrypted[BLOCK_SIZE];
+        block_encrypt(prev_block, encrypted);
+        xor_blocks(encrypted, plaintext+i, ciphertext+i);
+        memcpy(prev_block, ciphertext+i, BLOCK_SIZE);
+    }
+}
+
+void cfb_decrypt(uint8_t *ciphertext, size_t length, uint8_t *iv, uint8_t *plaintext) {
+    uint8_t prev_block[BLOCK_SIZE];
+    memcpy(prev_block, iv, BLOCK_SIZE);
+
+    for(size_t i=0; i<length; i+=BLOCK_SIZE) {
+        uint8_t encrypted[BLOCK_SIZE];
+        block_encrypt(prev_block, encrypted);
+        xor_blocks(encrypted, ciphertext+i, plaintext+i);
+        memcpy(prev_block, ciphertext+i, BLOCK_SIZE);
+    }
+}
+
+void print_hex(uint8_t *data, size_t len) {
+    for(size_t i=0; i<len; i++) {
+        printf("%02X ", data[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    uint8_t plaintext[] = "HELLO WORLD"; // 11 bytes
+    size_t pt_len = strlen((char*)plaintext);
+
+    uint8_t padded[256];
+    size_t padded_len;
+    pad(plaintext, pt_len, padded, &padded_len);
+
+    uint8_t iv[BLOCK_SIZE] = {0x00}; // Initialization vector for CBC and CFB
+    uint8_t ciphertext[256], decrypted[256];
+
+    printf("Plaintext (padded): ");
+    print_hex(padded, padded_len);
+
+    ecb_encrypt(padded, padded_len, ciphertext);
+    printf("ECB Encrypted: ");
+    print_hex(ciphertext, padded_len);
+    ecb_decrypt(ciphertext, padded_len, decrypted);
+    printf("ECB Decrypted: ");
+    print_hex(decrypted, padded_len);
+
+    cbc_encrypt(padded, padded_len, iv, ciphertext);
+    printf("CBC Encrypted: ");
+    print_hex(ciphertext, padded_len);
+    cbc_decrypt(ciphertext, padded_len, iv, decrypted);
+    printf("CBC Decrypted: ");
+    print_hex(decrypted, padded_len);
+
+    cfb_encrypt(padded, padded_len, iv, ciphertext);
+    printf("CFB Encrypted: ");
+    print_hex(ciphertext, padded_len);
+    cfb_decrypt(ciphertext, padded_len, iv, decrypted);
+    printf("CFB Decrypted: ");
+    print_hex(decrypted, padded_len);
+
+    return 0;
+}
