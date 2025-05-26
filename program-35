@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_LEN 100
+
+void generateKey(int key[], int length) {
+    srand(time(0));
+    for (int i = 0; i < length; i++)
+        key[i] = rand() % 26;
+}
+
+void encrypt(char *plaintext, int key[], char *ciphertext) {
+    int length = strlen(plaintext);
+    for (int i = 0; i < length; i++) {
+        if (plaintext[i] >= 'A' && plaintext[i] <= 'Z')
+            ciphertext[i] = ((plaintext[i] - 'A' + key[i]) % 26) + 'A';
+        else if (plaintext[i] >= 'a' && plaintext[i] <= 'z')
+            ciphertext[i] = ((plaintext[i] - 'a' + key[i]) % 26) + 'a';
+        else
+            ciphertext[i] = plaintext[i];
+    }
+    ciphertext[length] = '\0';
+}
+
+void decrypt(char *ciphertext, int key[], char *decrypted) {
+    int length = strlen(ciphertext);
+    for (int i = 0; i < length; i++) {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z')
+            decrypted[i] = ((ciphertext[i] - 'A' - key[i] + 26) % 26) + 'A';
+        else if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z')
+            decrypted[i] = ((ciphertext[i] - 'a' - key[i] + 26) % 26) + 'a';
+        else
+            decrypted[i] = ciphertext[i];
+    }
+    decrypted[length] = '\0';
+}
+
+int main() {
+    char plaintext[MAX_LEN], ciphertext[MAX_LEN], decrypted[MAX_LEN];
+    int key[MAX_LEN];
+
+    printf("Enter plaintext: ");
+    fgets(plaintext, MAX_LEN, stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0';
+
+    int length = strlen(plaintext);
+    generateKey(key, length);
+
+    encrypt(plaintext, key, ciphertext);
+    decrypt(ciphertext, key, decrypted);
+
+    printf("\nGenerated Key: ");
+    for (int i = 0; i < length; i++)
+        printf("%d ", key[i]);
+
+    printf("\nCiphertext: %s", ciphertext);
+    printf("\nDecrypted Text: %s\n", decrypted);
+
+    return 0;
+}
