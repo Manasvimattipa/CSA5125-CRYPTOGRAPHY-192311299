@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MOD 26
+#define SIZE 2 
+
+char plaintext_pairs[][SIZE + 1] = {"HI", "NO"};
+char ciphertext_pairs[][SIZE + 1] = {"FL", "VY"};
+int modInverse(int num) {
+    for (int i = 1; i < MOD; i++)
+        if ((num * i) % MOD == 1)
+            return i;
+    return -1;
+}
+void solveKeyMatrix() {
+    int P[SIZE][SIZE], C[SIZE][SIZE];
+
+    for (int i = 0; i < SIZE; i++) {
+        P[0][i] = plaintext_pairs[0][i] - 'A';
+        P[1][i] = plaintext_pairs[1][i] - 'A';
+        C[0][i] = ciphertext_pairs[0][i] - 'A';
+        C[1][i] = ciphertext_pairs[1][i] - 'A';
+    }
+
+  
+    int det = (P[0][0] * P[1][1] - P[0][1] * P[1][0]) % MOD;
+    if (det < 0) det += MOD;
+    int det_inv = modInverse(det);
+    if (det_inv == -1) {
+        printf("Matrix not invertible! Attack failed.\n");
+        return;
+    }
+
+    int invP[SIZE][SIZE] = {
+        {(P[1][1] * det_inv) % MOD, (-P[0][1] * det_inv + MOD) % MOD},
+        {(-P[1][0] * det_inv + MOD) % MOD, (P[0][0] * det_inv) % MOD}
+    };
+
+    
+    int key[SIZE][SIZE];
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            key[i][j] = 0;
+            for (int k = 0; k < SIZE; k++)
+                key[i][j] += C[i][k] * invP[k][j];
+            key[i][j] %= MOD;
+        }
+    }
+
+    
+    printf("Recovered Key Matrix:\n");
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++)
+            printf("%2d ", key[i][j]);
+        printf("\n");
+    }
+}
+
+int main() {
+    printf("Performing known plaintext attack on Hill cipher...\n");
+    solveKeyMatrix();
+    return 0;
+}
