@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define PUBLIC_BASE 5
+#define PUBLIC_MODULUS 23
+
+int modExp(int base, int exponent, int modulus) {
+    int result = 1;
+    for (int i = 0; i < exponent; i++)
+        result = (result * base) % modulus;
+    return result;
+}
+
+int main() {
+    int aliceSecret = 6;
+    int bobSecret = 15;
+
+    int alicePublic = modExp(PUBLIC_BASE, aliceSecret, PUBLIC_MODULUS);
+    int bobPublic = modExp(PUBLIC_BASE, bobSecret, PUBLIC_MODULUS);
+
+    int aliceSharedKey = modExp(bobPublic, aliceSecret, PUBLIC_MODULUS);
+    int bobSharedKey = modExp(alicePublic, bobSecret, PUBLIC_MODULUS);
+
+    printf("Alice sends: %d\n", alicePublic);
+    printf("Bob sends: %d\n", bobPublic);
+    printf("Shared key computed by Alice: %d\n", aliceSharedKey);
+    printf("Shared key computed by Bob: %d\n", bobSharedKey);
+
+    return 0;
+}
