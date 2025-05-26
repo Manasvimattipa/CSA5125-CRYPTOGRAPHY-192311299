@@ -1,0 +1,85 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define MAX_TEXT 1000
+#define ALPHABET_SIZE 26
+
+// English letter frequencies in descending order
+const char english_freq_order[ALPHABET_SIZE] = {
+    'e', 't', 'a', 'o', 'i', 'n', 's', 'h', 'r', 'd',
+    'l', 'c', 'u', 'm', 'w', 'f', 'g', 'y', 'p', 'b',
+    'v', 'k', 'j', 'x', 'q', 'z'
+};
+
+typedef struct {
+    char letter;
+    int count;
+} Frequency;
+
+int compare_freq(const void *a, const void *b) {
+    Frequency *fa = (Frequency *)a;
+    Frequency *fb = (Frequency *)b;
+    return fb->count - fa->count; // Descending order
+}
+
+void count_frequency(const char *text, Frequency freq[ALPHABET_SIZE]) {
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        freq[i].letter = 'a' + i;
+        freq[i].count = 0;
+    }
+    for (int i = 0; text[i]; i++) {
+        if (isalpha(text[i])) {
+            freq[tolower(text[i]) - 'a'].count++;
+        }
+    }
+}
+
+void apply_mapping(const char *cipher, char *plain, const char map[ALPHABET_SIZE]) {
+    for (int i = 0; cipher[i]; i++) {
+        if (isalpha(cipher[i])) {
+            char base = isupper(cipher[i]) ? 'A' : 'a';
+            plain[i] = map[tolower(cipher[i]) - 'a'];
+            if (isupper(cipher[i])) plain[i] = toupper(plain[i]);
+        } else {
+            plain[i] = cipher[i];
+        }
+    }
+    plain[strlen(cipher)] = '\0';
+}
+
+void generate_plaintexts(const char *cipher, int top_n) {
+    Frequency freq[ALPHABET_SIZE];
+    count_frequency(cipher, freq);
+    qsort(freq, ALPHABET_SIZE, sizeof(Frequency), compare_freq);
+
+    for (int t = 0; t < top_n; t++) {
+        char mapping[ALPHABET_SIZE];
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            if (i + t < ALPHABET_SIZE)
+                mapping[freq[i].letter - 'a'] = english_freq_order[i + t];
+            else
+                mapping[freq[i].letter - 'a'] = english_freq_order[(i + t) % ALPHABET_SIZE];
+        }
+
+        char plain[MAX_TEXT];
+        apply_mapping(cipher, plain, mapping);
+        printf("\nPossible plaintext #%d:\n%s\n", t + 1, plain);
+    }
+}
+
+int main() {
+    char cipher[MAX_TEXT];
+    int top_n;
+
+    printf("Enter the ciphertext:\n");
+    fgets(cipher, MAX_TEXT, stdin);
+    cipher[strcspn(cipher, "\n")] = '\0'; // Remove newline
+
+    printf("How many top possible plaintexts to show? ");
+    scanf("%d", &top_n);
+
+    generate_plaintexts(cipher, top_n);
+    return 0;
+}
