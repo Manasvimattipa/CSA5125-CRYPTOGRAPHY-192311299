@@ -1,0 +1,23 @@
+#include <stdio.h>
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int main() {
+    int n = 3599;  
+    int known_plaintext = 53;  
+
+    int factor = gcd(known_plaintext, n);
+
+    if (factor > 1 && factor < n) {
+        printf("Found factor of n: %d\n", factor);
+        int p = factor;
+        int q = n / p;
+        printf("n factorized as: p = %d, q = %d\n", p, q);
+    } else {
+        printf("No useful factor found.\n");
+    }
+
+    return 0;
+}
