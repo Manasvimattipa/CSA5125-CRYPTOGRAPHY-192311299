@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <string.h>
+
+#define ROUNDS 16
+#define KEY_SIZE 48
+
+// Example DES key schedule (for simplicity)
+void generateKeys(char keys[ROUNDS][KEY_SIZE]) {
+    char baseKey[KEY_SIZE] = "0123456789ABCDEF"; 
+    for (int i = 0; i < ROUNDS; i++) {
+        strncpy(keys[i], baseKey, KEY_SIZE);
+        keys[i][KEY_SIZE - 1] = '0' + (ROUNDS - i); 
+    }
+}
+
+// DES decryption function (dummy implementation)
+void desDecrypt(char *ciphertext, char keys[ROUNDS][KEY_SIZE], char *plaintext) {
+    strncpy(plaintext, ciphertext, strlen(ciphertext));
+    for (int i = ROUNDS - 1; i >= 0; i--) {
+        for (int j = 0; j < strlen(plaintext); j++) {
+            plaintext[j] = (plaintext[j] - keys[i][KEY_SIZE - 1] + 26) % 26 + 'A';
+        }
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+
+int main() {
+    char keys[ROUNDS][KEY_SIZE];
+    char ciphertext[] = "ZEBBW";
+    char plaintext[strlen(ciphertext) + 1];
+
+    generateKeys(keys);
+    desDecrypt(ciphertext, keys, plaintext);
+
+    printf("Ciphertext: %s\n", ciphertext);
+    printf("Decrypted Text: %s\n", plaintext);
+
+    return 0;
+}
