@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/aes.h>
+
+#define BLOCK_SIZE 16
+
+void leftShift(unsigned char *output, unsigned char *input) {
+    for (int i = 0; i < BLOCK_SIZE - 1; i++)
+        output[i] = (input[i] << 1) | (input[i + 1] >> 7);
+    output[BLOCK_SIZE - 1] = input[BLOCK_SIZE - 1] << 1;
+}
+
+void xorWithConstant(unsigned char *output) {
+    unsigned char constRb[BLOCK_SIZE] = {0x87};
+    output[BLOCK_SIZE - 1] ^= constRb[0];
+}
+
+void generateSubkeys(unsigned char *key, unsigned char *K1, unsigned char *K2) {
+    AES_KEY aesKey;
+    unsigned char L[BLOCK_SIZE] = {0}, temp[BLOCK_SIZE];
+
+    AES_set_encrypt_key(key, 128, &aesKey);
+    AES_encrypt(L, L, &aesKey);
+
+    leftShift(K1, L);
+    if (L[0] & 0x80) xorWithConstant(K1);
+
+    leftShift(K2, K1);
+    if (K1[0] & 0x80) xorWithConstant(K2);
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "0123456789abcdef";
+    unsigned char K1[BLOCK_SIZE], K2[BLOCK_SIZE];
+
+    generateSubkeys(key, K1, K2);
+
+    printf("Subkey K1: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", K1[i]);
+    printf("\n");
+
+    printf("Subkey K2: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", K2[i]);
+    printf("\n");
+
+    return 0;
+}
