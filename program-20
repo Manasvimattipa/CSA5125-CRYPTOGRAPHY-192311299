@@ -1,0 +1,56 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/des.h>
+
+void encryptECB(unsigned char *plaintext, unsigned char *key, unsigned char *ciphertext) {
+    DES_key_schedule keySchedule;
+    DES_set_key((DES_cblock*)key, &keySchedule);
+    for (int i = 0; i < strlen((char*)plaintext); i += 8)
+        DES_ecb_encrypt((DES_cblock*)&plaintext[i], (DES_cblock*)&ciphertext[i], &keySchedule, DES_ENCRYPT);
+}
+
+void decryptECB(unsigned char *ciphertext, unsigned char *key, unsigned char *plaintext) {
+    DES_key_schedule keySchedule;
+    DES_set_key((DES_cblock*)key, &keySchedule);
+    for (int i = 0; i < strlen((char*)ciphertext); i += 8)
+        DES_ecb_encrypt((DES_cblock*)&ciphertext[i], (DES_cblock*)&plaintext[i], &keySchedule, DES_DECRYPT);
+}
+
+void encryptCBC(unsigned char *plaintext, unsigned char *key, unsigned char *iv, unsigned char *ciphertext) {
+    DES_key_schedule keySchedule;
+    DES_set_key((DES_cblock*)key, &keySchedule);
+    DES_cblock ivec;
+    memcpy(ivec, iv, sizeof(DES_cblock));
+    DES_ncbc_encrypt(plaintext, ciphertext, strlen((char*)plaintext), &keySchedule, &ivec, DES_ENCRYPT);
+}
+
+void decryptCBC(unsigned char *ciphertext, unsigned char *key, unsigned char *iv, unsigned char *plaintext) {
+    DES_key_schedule keySchedule;
+    DES_set_key((DES_cblock*)key, &keySchedule);
+    DES_cblock ivec;
+    memcpy(ivec, iv, sizeof(DES_cblock));
+    DES_ncbc_encrypt(ciphertext, plaintext, strlen((char*)ciphertext), &keySchedule, &ivec, DES_DECRYPT);
+}
+
+int main() {
+    unsigned char key[8] = "12345678";
+    unsigned char iv[8] = "initVect";
+    unsigned char plaintext[] = "This is a test!";
+    unsigned char ciphertextECB[sizeof(plaintext)], decryptedECB[sizeof(plaintext)];
+    unsigned char ciphertextCBC[sizeof(plaintext)], decryptedCBC[sizeof(plaintext)];
+
+    encryptECB(plaintext, key, ciphertextECB);
+    decryptECB(ciphertextECB, key, decryptedECB);
+    encryptCBC(plaintext, key, iv, ciphertextCBC);
+    decryptCBC(ciphertextCBC, key, iv, decryptedCBC);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("ECB Ciphertext: ");
+    for (int i = 0; i < sizeof(plaintext); i++) printf("%02X ", ciphertextECB[i]);
+    printf("\nECB Decrypted: %s\n", decryptedECB);
+    printf("CBC Ciphertext: ");
+    for (int i = 0; i < sizeof(plaintext); i++) printf("%02X ", ciphertextCBC[i]);
+    printf("\nCBC Decrypted: %s\n", decryptedCBC);
+
+    return 0;
+}
