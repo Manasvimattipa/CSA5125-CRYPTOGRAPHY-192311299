@@ -1,0 +1,50 @@
+#include <stdio.h>
+#include <stdint.h>
+
+#define KEY_SIZE 56
+#define SUBKEY_SIZE 48
+#define ROUNDS 16
+
+// Initial key (56-bit example)
+uint64_t initial_key = 0x123456789ABCDEF;
+
+// Subsets for key generation
+int subset1[28] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
+                   15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27};
+                   
+int subset2[28] = {28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 
+                   41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55};
+
+// Function to extract bits from subsets
+uint32_t extractBits(uint64_t key, int subset[]) {
+    uint32_t extracted = 0;
+    for (int i = 0; i < 28; i++) {
+        extracted |= ((key >> (KEY_SIZE - 1 - subset[i])) & 1) << (27 - i);
+    }
+    return extracted;
+}
+
+// Function to generate subkeys for each round
+void generateSubkeys(uint32_t subkeys[ROUNDS]) {
+    uint32_t left_half = extractBits(initial_key, subset1);
+    uint32_t right_half = extractBits(initial_key, subset2);
+    
+    for (int i = 0; i < ROUNDS; i++) {
+        left_half = (left_half << 1) | (left_half >> 27); // Circular shift
+        right_half = (right_half << 1) | (right_half >> 27);
+
+        subkeys[i] = ((left_half & 0xFFFFFF) << 24) | (right_half & 0xFFFFFF);
+    }
+}
+
+int main() {
+    uint32_t subkeys[ROUNDS];
+    generateSubkeys(subkeys);
+
+    printf("Generated Subkeys:\n");
+    for (int i = 0; i < ROUNDS; i++) {
+        printf("Round %d Key: %08X\n", i + 1, subkeys[i]);
+    }
+
+    return 0;
+}
