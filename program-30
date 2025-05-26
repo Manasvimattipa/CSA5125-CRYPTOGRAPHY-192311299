@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/aes.h>
+
+#define BLOCK_SIZE 16
+
+void xorBlock(unsigned char *result, unsigned char *block1, unsigned char *block2) {
+    for (int i = 0; i < BLOCK_SIZE; i++)
+        result[i] = block1[i] ^ block2[i];
+}
+
+void cbcMac(unsigned char *key, unsigned char *message, int messageLen, unsigned char *mac) {
+    AES_KEY aesKey;
+    AES_set_encrypt_key(key, 128, &aesKey);
+    
+    unsigned char block[BLOCK_SIZE] = {0};
+    for (int i = 0; i < messageLen; i += BLOCK_SIZE) {
+        xorBlock(block, block, message + i);
+        AES_encrypt(block, mac, &aesKey);
+        memcpy(block, mac, BLOCK_SIZE);
+    }
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "0123456789abcdef";
+    unsigned char message[BLOCK_SIZE] = "CBC-MAC-Test";
+    unsigned char mac[BLOCK_SIZE];
+
+    cbcMac(key, message, BLOCK_SIZE, mac);
+    
+    unsigned char modifiedMessage[BLOCK_SIZE * 2];
+    memcpy(modifiedMessage, message, BLOCK_SIZE);
+    xorBlock(modifiedMessage + BLOCK_SIZE, message, mac);
+
+    unsigned char mac2[BLOCK_SIZE];
+    cbcMac(key, modifiedMessage, BLOCK_SIZE * 2, mac2);
+
+    printf("MAC for one-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", mac[i]);
+    printf("\n");
+
+    printf("MAC for two-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) printf("%02X ", mac2[i]);
+    printf("\n");
+
+    return 0;
+}
