@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int modInverse(int e, int phi) {
+    int t = 0, new_t = 1;
+    int r = phi, new_r = e;
+
+    while (new_r != 0) {
+        int quotient = r / new_r;
+        int temp = t;
+        t = new_t;
+        new_t = temp - quotient * new_t;
+        temp = r;
+        r = new_r;
+        new_r = temp - quotient * new_r;
+    }
+
+    if (r > 1) return -1;
+    if (t < 0) t += phi;
+    return t;
+}
+
+// RSA Key Generation
+void generateKeys(int *e, int *d, int *n) {
+    int p = 61, q = 53;
+    *n = p * q;
+    int phi = (p - 1) * (q - 1);
+    
+    *e = 17; // Common choice
+    *d = modInverse(*e, phi);
+}
+
+// RSA Encryption
+int encryptRSA(int message, int e, int n) {
+    int result = 1;
+    for (int i = 0; i < e; i++)
+        result = (result * message) % n;
+    return result;
+}
+
+// RSA Decryption
+int decryptRSA(int ciphertext, int d, int n) {
+    int result = 1;
+    for (int i = 0; i < d; i++)
+        result = (result * ciphertext) % n;
+    return result;
+}
+
+int main() {
+    int e, d, n;
+    generateKeys(&e, &d, &n);
+    
+    int message = 42;
+    int ciphertext = encryptRSA(message, e, n);
+    int decrypted = decryptRSA(ciphertext, d, n);
+
+    printf("Public Key: (e = %d, n = %d)\n", e, n);
+    printf("Private Key: (d = %d, n = %d)\n", d, n);
+    printf("Original Message: %d\n", message);
+    printf("Encrypted Message: %d\n", ciphertext);
+    printf("Decrypted Message: %d\n", decrypted);
+
+    return 0;
+}
